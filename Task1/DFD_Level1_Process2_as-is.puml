@@ -1,0 +1,53 @@
+@startuml DFD_Level1_Process2_Payments
+title DFD Уровень 1: Процесс "Прием платежей и учет" (As-Is)
+
+rectangle "Внешние сущности" {
+  (Пациент) as patient
+  (Кассир) as cashier
+  (Бухгалтер) as accountant
+}
+
+rectangle "Процессы" {
+  (2.1\nФормирование счета) as p1
+  (2.2\nПрием оплаты) as p2
+  (2.3\nОтражение в 1С) as p3
+  (2.4\nСверка и отчетность) as p4
+}
+
+database "Хранилища данных" {
+  (Файлы Excel\n"Платежи") as store_excel_payments
+  (1С:Бухгалтерия\n"Файловый режим") as store_1c_accounting
+  (Контрольно-кассовая машина) as store_kk
+  (Active Directory) as store_ad
+}
+
+store_ad --> p1
+patient --> p1 : Данные о полученной услуге
+p1 --> patient : Счет/квитанция (на бумаге)
+p1 --> store_excel_payments : Запись о выставленном счете
+patient --> p2 : Наличные/карта
+cashier --> p2 : Операция по ККМ
+p2 --> store_kk : Фискальный чек
+p2 --> store_excel_payments : Отметка об оплате (вручную)
+cashier --> p3 : Перенос данных из Excel в 1С
+store_excel_payments --> p3 : Данные о платежах
+p3 --> store_1c_accounting : Проводки, учет доходов
+store_1c_accounting --> p4 : Данные для сверки
+store_excel_payments --> p4 : Данные для сверки
+accountant --> p4 : Формирование отчетов
+p4 --> accountant : Бухгалтерские отчеты, данные для налоговой
+
+note right of p3 #pink
+ **РИСК ОШИБКИ И УТЕЧКИ**
+ Ручной перенос данных между
+ системами. Кассир имеет доступ
+ к полному файлу платежей с ПДн.
+end note
+note right of store_excel_payments #pink
+ **РИСК**
+ Файл с привязкой платежей
+ к ФИО пациентов доступен кассирам
+ и бухгалтерам без разграничения.
+end note
+
+@enduml
